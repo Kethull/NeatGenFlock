@@ -1,4 +1,4 @@
-#neat.py
+#neat_config.py
 import neat
 
 # Define the fitness function for the predators

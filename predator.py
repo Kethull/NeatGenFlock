@@ -22,6 +22,7 @@ class Predator(Entity):
         self.width = width
         self.height = height
         self.speed = speed
+        self.turn_rate = 0.1  # Smaller values make turning smoother
         self.energy = 100
         self.regenerating = False
         self.separation_distance = 110
@@ -61,13 +62,17 @@ class Predator(Entity):
         old_position = self.position.copy()
 
         if self.energy <= 1:
-            #self.energy += self.energy_regeneration_rate  # Regenerate energy
             self.regenerating = True
         else:
             if not self.regenerating:
                 self.apply_boids_rules(predators, prey_list)
                 self.target_closest_prey(prey_list)
                 self.catch_prey(prey_list)
+
+                # LERP: linear interpolation between current velocity and desired velocity
+                desired_velocity = self.velocity.copy()
+                self.velocity = self.velocity * (1 - self.turn_rate) + desired_velocity * self.turn_rate
+
                 self.update_position()
 
         new_position = self.position
@@ -80,7 +85,8 @@ class Predator(Entity):
 
         if self.energy > 30:
             self.regenerating = False
-               
+
+                
 
     def catch_prey(self, prey_list, catch_distance=5):
         caught_prey = []
@@ -103,6 +109,19 @@ class Predator(Entity):
     def render(self, screen):
         if not np.isnan(self.position[0]) and not np.isnan(self.position[1]):
             pygame.draw.circle(screen, self.color, (int(self.position[0]), int(self.position[1])), self.radius)
+
+            # Draw the eyes to indicate direction
+            direction = self.velocity / np.linalg.norm(self.velocity)
+            eye_offset = np.array([direction[1], -direction[0]]) * self.radius * 0.3
+            eye_distance = direction * self.radius * 0.6
+            eye_radius = 2
+
+            left_eye_position = self.position + eye_distance - eye_offset
+            right_eye_position = self.position + eye_distance + eye_offset
+
+            pygame.draw.circle(screen, (0, 0, 0), left_eye_position.astype(int), eye_radius)
+            pygame.draw.circle(screen, (0, 0, 0), right_eye_position.astype(int), eye_radius)
+
 
     def emit_pheromone(self, pheromones):
         # Emit a pheromone at the predator's current position

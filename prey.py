@@ -25,6 +25,7 @@ class Prey(Entity):
         self.time_since_last_score = 0
         self.color = (0, 255, 0)
         self.speed = speed
+        self.turn_rate = 0.1  # Smaller values make turning smoother
         self.width = width
         self.height = height
         self.separation_distance = 110
@@ -88,6 +89,11 @@ class Prey(Entity):
         old_position = self.position.copy()
         self.apply_boids_rules(prey_list)
         self.avoid_predators(predators)
+        
+        # LERP: linear interpolation between current velocity and desired velocity
+        desired_velocity = self.velocity.copy()
+        self.velocity = self.velocity * (1 - self.turn_rate) + desired_velocity * self.turn_rate
+
         self.update_position()
         new_position = self.position
 
@@ -111,6 +117,7 @@ class Prey(Entity):
         # Cap the energy at the maximum value
         self.energy = min(self.energy, 100)
 
+
     def emit_pheromone(self, pheromones):
         # Emit a pheromone at the prey's current position
         pheromones.append(Pheromone(self.position, intensity=5))
@@ -118,6 +125,19 @@ class Prey(Entity):
     def render(self, screen):
         if not np.isnan(self.position[0]) and not np.isnan(self.position[1]):
             pygame.draw.circle(screen, self.color, (int(self.position[0]), int(self.position[1])), self.radius)
+
+            # Draw the eyes to indicate direction
+            direction = self.velocity / np.linalg.norm(self.velocity)
+            eye_offset = np.array([direction[1], -direction[0]]) * self.radius * 0.3
+            eye_distance = direction * self.radius * 0.6
+            eye_radius = 2
+
+            left_eye_position = self.position + eye_distance - eye_offset
+            right_eye_position = self.position + eye_distance + eye_offset
+
+            pygame.draw.circle(screen, (0, 0, 0), left_eye_position.astype(int), eye_radius)
+            pygame.draw.circle(screen, (0, 0, 0), right_eye_position.astype(int), eye_radius)
+
 
     def create_new_prey(self):
         # Create a new prey entity with the same position and speed
