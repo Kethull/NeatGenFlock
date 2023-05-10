@@ -23,7 +23,6 @@ class Predator(Entity):
         self.height = height
         self.speed = speed
         self.energy = 100
-        self.energy_regeneration_rate = 0.01        
         self.regenerating = False
         self.separation_distance = 110
         self.score = 0
@@ -58,26 +57,26 @@ class Predator(Entity):
         if speed > self.max_speed:
             self.velocity = (self.velocity / speed) * self.max_speed
 
-    def update(self, predators, prey_list): 
+    def update(self, predators, prey_list):
         old_position = self.position.copy()
 
         if self.energy <= 1:
-            self.energy += self.energy_regeneration_rate  # Regenerate energy
+            #self.energy += self.energy_regeneration_rate  # Regenerate energy
             self.regenerating = True
         else:
             if not self.regenerating:
-                self.apply_boids_rules(predators, prey_list) 
-                self.target_closest_prey(prey_list)  
+                self.apply_boids_rules(predators, prey_list)
+                self.target_closest_prey(prey_list)
                 self.catch_prey(prey_list)
-                self.update_position()           
+                self.update_position()
 
         new_position = self.position
 
-        if np.all(new_position == old_position):  
-            if self.energy < 100:
-                self.energy += self.energy_regeneration_rate  # Regenerate energy
-        else:
+        if not np.all(new_position == old_position):
             self.energy -= 1  # Reduce energy for moving
+
+        if self.energy <= 0:
+            predators.remove(self)  # Remove predator if energy reaches zero
 
         if self.energy > 30:
             self.regenerating = False
@@ -87,14 +86,15 @@ class Predator(Entity):
         caught_prey = []
         for prey in prey_list:
             distance = np.linalg.norm(prey.position - self.position)
+
             if distance < catch_distance:
-                caught_prey.append(prey)
-                self.score += 1  # Add a point for catching prey
-                self.energy -= 1
-        for prey in caught_prey:
-            prey_list.remove(prey)
-            prey.score = 0  # Reset the score of the caught prey
-            self.create_new_predator()
+                    caught_prey.append(prey)
+                    self.score += 1  # Add a point for catching prey
+                    self.energy -= 1
+            for prey in caught_prey:
+                prey_list.remove(prey)
+                prey.score = 0  # Reset the score of the caught prey
+                self.create_new_predator()
 
     def create_new_predator(self):
         # Implement your genetic algorithm for creating a new predator here
@@ -107,5 +107,3 @@ class Predator(Entity):
     def emit_pheromone(self, pheromones):
         # Emit a pheromone at the predator's current position
         pheromones.append(Pheromone(self.position, intensity=10))
-
-    
