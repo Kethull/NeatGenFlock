@@ -66,9 +66,9 @@ class Predator(Entity):
             self.regenerating = True
         else:
             if not self.regenerating:
-                #self.apply_boids_rules(predators, prey_list) 
-                #self.target_closest_prey(prey_list)  
-                #self.catch_prey(prey_list)
+                self.apply_boids_rules(predators, prey_list) 
+                self.target_closest_prey(prey_list)  
+                self.catch_prey(prey_list)
                 self.update_position()           
 
         new_position = self.position
