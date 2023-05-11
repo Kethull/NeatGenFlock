@@ -4,6 +4,7 @@ from entity import Entity
 import numpy as np
 from pheromone import Pheromone
 import neat_config as neat
+import random
 
 class Predator(Entity):
     def __init__(self, position, width, height, speed=None):
@@ -61,6 +62,10 @@ class Predator(Entity):
     def update(self, predators, prey_list):
         old_position = self.position.copy()
 
+        
+        if self.energy <= 0:
+            predators.remove(self)  # Remove predator if energy reaches zero
+
         if self.energy <= 1:
             self.regenerating = True
         else:
@@ -80,12 +85,8 @@ class Predator(Entity):
         if not np.all(new_position == old_position):
             self.energy -= 1  # Reduce energy for moving
 
-        if self.energy <= 0:
-            predators.remove(self)  # Remove predator if energy reaches zero
-
         if self.energy > 30:
             self.regenerating = False
-
                 
 
     def catch_prey(self, prey_list, catch_distance=5):
@@ -94,17 +95,49 @@ class Predator(Entity):
             distance = np.linalg.norm(prey.position - self.position)
 
             if distance < catch_distance:
-                    caught_prey.append(prey)
-                    self.score += 1  # Add a point for catching prey
-                    self.energy -= 1
+                caught_prey.append(prey)
+                self.score += 1  # Add a point for catching prey
+                self.energy -= 1
             for prey in caught_prey:
                 prey_list.remove(prey)
                 prey.score = 0  # Reset the score of the caught prey
-                self.create_new_predator()
+                self.create_new_predator(prey_list)
 
-    def create_new_predator(self):
-        # Implement your genetic algorithm for creating a new predator here
-        pass
+    def create_new_predator(self, predators):
+        # 1. Select two parent predators randomly from the existing predator population
+        parent1, parent2 = random.sample(predators, 2)
+
+        # 2. Perform crossover by averaging the attributes of the two parent predators
+        max_speed = (parent1.max_speed + parent2.max_speed) / 2
+        chase_speed = (parent1.chase_speed + parent2.chase_speed) / 2
+        avoidance_distance = (parent1.avoidance_distance + parent2.avoidance_distance) / 2
+        communication_distance = (parent1.communication_distance + parent2.communication_distance) / 2
+        communication_strength = (parent1.communication_strength + parent2.communication_strength) / 2
+        pheromone_strength = (parent1.pheromone_strength + parent2.pheromone_strength) / 2
+        separation_distance = (parent1.separation_distance + parent2.separation_distance) / 2
+
+        # 3. Apply mutation to the offspring's attributes by introducing small random changes
+        mutation_rate = 0.1  # Adjust this value to control the rate of mutation
+        max_speed *= 1 + (random.random() * 2 - 1) * mutation_rate
+        chase_speed *= 1 + (random.random() * 2 - 1) * mutation_rate
+        avoidance_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        communication_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        communication_strength *= 1 + (random.random() * 2 - 1) * mutation_rate
+        pheromone_strength *= 1 + (random.random() * 2 - 1) * mutation_rate
+        separation_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+
+        # 4. Create a new predator with the modified attributes
+        offspring_position = (parent1.position + parent2.position) / 2
+        offspring = Predator(offspring_position, self.width, self.height, speed=[chase_speed, chase_speed])
+        offspring.max_speed = max_speed
+        offspring.avoidance_distance = avoidance_distance
+        offspring.communication_distance = communication_distance
+        offspring.communication_strength = communication_strength
+        offspring.pheromone_strength = pheromone_strength
+        offspring.separation_distance = separation_distance
+
+        predators.append(offspring)  # Add the new predator to the population
+
 
     def render(self, screen):
         if not np.isnan(self.position[0]) and not np.isnan(self.position[1]):

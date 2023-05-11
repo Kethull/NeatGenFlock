@@ -4,6 +4,7 @@ import numpy as np
 from pheromone import Pheromone
 import neat
 import time
+import random
 
 
 class Prey(Entity):
@@ -139,23 +140,41 @@ class Prey(Entity):
             pygame.draw.circle(screen, (0, 0, 0), right_eye_position.astype(int), eye_radius)
 
 
-    def create_new_prey(self):
-        # Create a new prey entity with the same position and speed
-        new_prey = Prey(self.position, self.width, self.height, self.speed)
-        new_prey.color = self.color
-        new_prey.radius = self.radius
-        new_prey.max_speed = self.max_speed
-        new_prey.avoidance_distance = self.avoidance_distance
-        new_prey.cohesion_distance = self.cohesion_distance
-        new_prey.alignment_distance = self.alignment_distance
-        new_prey.communication_distance = self.communication_distance
-        new_prey.communication_strength = self.communication_strength
-        new_prey.pheromone_strength = self.pheromone_strength
-        new_prey.survival_time = self.survival_time
-        new_prey.score = self.score
-        new_prey.time_since_last_score = self.time_since_last_score
-        new_prey.energy = self.energy
-        new_prey.energy_regeneration_rate = self.energy_regeneration_rate
-        new_prey.original_energy_regeneration_rate = self.original_energy_regeneration_rate
-        new_prey.energy_regeneration_range = self.energy_regeneration_range
-        return new_prey
+    def create_new_prey(self, prey_list):
+        # 1. Select two parent prey randomly from the existing prey population
+        parent1, parent2 = random.sample(prey_list, 2)
+
+        # 2. Perform crossover by averaging the attributes of the two parent prey
+        max_speed = (parent1.max_speed + parent2.max_speed) / 2
+        avoidance_distance = (parent1.avoidance_distance + parent2.avoidance_distance) / 2
+        cohesion_distance = (parent1.cohesion_distance + parent2.cohesion_distance) / 2
+        alignment_distance = (parent1.alignment_distance + parent2.alignment_distance) / 2
+        communication_distance = (parent1.communication_distance + parent2.communication_distance) / 2
+        communication_strength = (parent1.communication_strength + parent2.communication_strength) / 2
+        pheromone_strength = (parent1.pheromone_strength + parent2.pheromone_strength) / 2
+        separation_distance = (parent1.separation_distance + parent2.separation_distance) / 2
+
+        # 3. Apply mutation to the offspring's attributes by introducing small random changes
+        mutation_rate = 0.1  # Adjust this value to control the rate of mutation
+        max_speed *= 1 + (random.random() * 2 - 1) * mutation_rate
+        avoidance_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        cohesion_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        alignment_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        communication_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+        communication_strength *= 1 + (random.random() * 2 - 1) * mutation_rate
+        pheromone_strength *= 1 + (random.random() * 2 - 1) * mutation_rate
+        separation_distance *= 1 + (random.random() * 2 - 1) * mutation_rate
+
+        # 4. Create a new prey with the modified attributes
+        offspring_position = (parent1.position + parent2.position) / 2
+        offspring = Prey(offspring_position, self.width, self.height, speed=[max_speed, max_speed])
+        offspring.avoidance_distance = avoidance_distance
+        offspring.cohesion_distance = cohesion_distance
+        offspring.alignment_distance = alignment_distance
+        offspring.communication_distance = communication_distance
+        offspring.communication_strength = communication_strength
+        offspring.pheromone_strength = pheromone_strength
+        offspring.separation_distance = separation_distance
+
+        prey_list.append(offspring)  # Add the new prey to the population
+
