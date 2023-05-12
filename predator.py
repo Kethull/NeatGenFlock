@@ -98,7 +98,9 @@ class Predator(Entity):
                 self.score += 1  # Add a point for catching prey
                 self.energy -= 1
             for prey in caught_prey:
-                prey_list.remove(prey)
+                if prey in prey_list:
+                    prey_list.remove(prey)
+
                 prey.score = 0  # Reset the score of the caught prey
                 self.create_new_predator(predators)
 
