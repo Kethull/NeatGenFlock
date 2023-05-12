@@ -61,9 +61,8 @@ class Predator(Entity):
 
     def update(self, predators, prey_list):
         old_position = self.position.copy()
-
         
-        if self.energy <= 0:
+        if self.energy <= 1:
             predators.remove(self)  # Remove predator if energy reaches zero
 
         if self.energy <= 1:
@@ -72,7 +71,7 @@ class Predator(Entity):
             if not self.regenerating:
                 self.apply_boids_rules(predators, prey_list)
                 self.target_closest_prey(prey_list)
-                self.catch_prey(prey_list)
+                self.catch_prey(prey_list, predators)
 
                 # LERP: linear interpolation between current velocity and desired velocity
                 desired_velocity = self.velocity.copy()
@@ -89,7 +88,7 @@ class Predator(Entity):
             self.regenerating = False
                 
 
-    def catch_prey(self, prey_list, catch_distance=5):
+    def catch_prey(self, prey_list, predators, catch_distance=5):
         caught_prey = []
         for prey in prey_list:
             distance = np.linalg.norm(prey.position - self.position)
@@ -101,7 +100,7 @@ class Predator(Entity):
             for prey in caught_prey:
                 prey_list.remove(prey)
                 prey.score = 0  # Reset the score of the caught prey
-                self.create_new_predator(prey_list)
+                self.create_new_predator(predators)
 
     def create_new_predator(self, predators):
         # 1. Select two parent predators randomly from the existing predator population
